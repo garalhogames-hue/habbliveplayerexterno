@@ -1,150 +1,80 @@
 <!doctype html>
 <html lang="pt-br">
 <head>
-    <link rel='icon' type='image/png' href='33c5a23f-60c0-4265-a252-981bc7f54bbd.png'>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Rádio Habblive — Player</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-<style>
-  :root{--bg-dark:#051821;--bg-grad-a:#0aa9b8;--bg-grad-b:#083b4a;--card:#0b2230cc;--card-strong:#0b2230f2;--text:#e6f6ff;--muted:#9fd3df;--accent:#22d1e8;--purple:#7b2ff7;--magenta:#f107a3;--shadow:0 10px 30px rgba(0,0,0,.35);--radius:18px}
-  *{box-sizing:border-box} html,body{height:100%;margin:0}
-  body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:var(--text);
-    background:radial-gradient(1200px 600px at 20% -10%, var(--bg-grad-a), transparent),
-               radial-gradient(900px 500px at 80% 10%, #12c2d3, transparent),
-               linear-gradient(180deg, var(--bg-dark), #06121a 70%);
-    display:grid;place-items:center;padding:20px}
-  .wrap{width:min(980px,100%)} .player{position:relative;background:linear-gradient(180deg,var(--card),var(--card-strong));
-    backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.08);border-radius:var(--radius);
-    padding:clamp(16px,3vw,28px);box-shadow:var(--shadow);overflow:hidden}
-  #heartLayer{position:absolute;inset:0;pointer-events:none;overflow:hidden}
-  .header{display:flex;gap:16px;align-items:center}
-  .header-actions{margin-left:auto;display:flex;align-items:center}
-  .cover{width:clamp(84px,20vw,140px);aspect-ratio:1/1;border-radius:20%;
-    background:radial-gradient(circle at 30% 30%,#ffffff22,#00000055),linear-gradient(135deg,var(--purple),var(--magenta));
-    box-shadow:var(--shadow);position:relative;overflow:hidden;flex:0 0 auto;background-size:cover;background-position:center}
-  .cover img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transition:opacity .25s ease}
-  .titles{flex:1 1 auto;min-width:0}
-  .brand{letter-spacing:.2px;font-weight:800;font-size:clamp(20px,4vw,28px);line-height:1.1}
-  .np{margin-top:6px;color:var(--muted);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .badges{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
-  .badge{padding:6px 10px;border-radius:999px;font-size:12px;background:#ffffff10;border:1px solid #ffffff1a}
-  .listenersRow{margin-top:8px;color:var(--muted);font-weight:700;display:block}
-  .controls{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:16px;margin-top:18px}
-  .play{width:74px;height:74px;border-radius:50%;border:none;display:grid;place-items:center;cursor:pointer;
-    background:conic-gradient(from 160deg,var(--magenta),var(--purple),var(--magenta));color:#fff;box-shadow:var(--shadow) transform:translateZ(0); transition:transform .12s ease, box-shadow .2s; }
-  .play svg{width:32px;height:32px}
-  .status{
-      font-size:26px;
-      font-weight:900;
-      color:var(--text);
-      background:none;
-      border:none;
-      padding:0;
-      display:inline-block;
-      min-width:260px;
-      text-align:left;
-      justify-self:start;
-      align-self:center;
-    } .volCol{display:flex;flex-direction:column;align-items:flex-end;gap:12px}
-  .vol{display:flex;align-items:center;gap:10px} .vol .ico{width:18px;height:18px;opacity:.8}
-  .slider{appearance:none;width:min(420px,60vw);height:10px;border-radius:999px;background:linear-gradient(90deg, var(--accent) 0%, #ffffff22 0%);outline:none;transition:background .12s linear;}
-  .slider::-webkit-slider-thumb{appearance:none;width:20px;height:20px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px #0003}
-  .slider::-moz-range-thumb{width:20px;height:20px;border:none;border-radius:50%;background:var(--accent)}
-  .loveBtn{border:1px solid #ffffff22;background:linear-gradient(180deg,#ff2c7d,#9922ff);color:#fff;border-radius:999px;
-    padding:14px 22px;font-weight:800;font-size:clamp(16px,2.8vw,18px);letter-spacing:.2px;cursor:pointer;
-    box-shadow:0 8px 18px #f107a355,inset 0 0 0 2px #ffffff22;display:inline-flex;align-items:center;gap:10px transform:translateZ(0); transition:transform .15s ease, box-shadow .2s ease;}
-  .loveBtn .icon{font-size:20px}
-  .footer{display:flex;justify-content:space-between;align-items:center;margin-top:20px;gap:10px;flex-wrap:wrap}
-  .links{display:flex;gap:10px;flex-wrap:wrap}
-  .btn{display:inline-flex;align-items:center;gap:10px;padding:10px 14px;border-radius:12px;border:1px solid #ffffff14;cursor:pointer;text-decoration:none;color:var(--text);
-    background:linear-gradient(180deg,#ffffff14,#ffffff08)} .hint{color:var(--muted);font-size:12px}
-  .heart{position:absolute;will-change:transform,opacity;transition:transform 1.3s ease-out,opacity 1.3s ease-out;user-select:none}
-  @media (max-width:640px){.header{align-items:flex-start}.header-actions{margin-left:0;margin-top:10px}.controls{grid-template-columns:1fr}
-    .play{justify-self:center transform:translateZ(0); transition:transform .12s ease, box-shadow .2s; }.volCol{align-items:center}.footer{flex-direction:column;align-items:stretch}.links{justify-content:center}}
-
-  @media (max-width: 720px){
-    .wrap{width:100%}
-    .player{padding:16px;border-radius:16px}
-    .header{flex-wrap:wrap; align-items:flex-start}
-    .cover{width:84px; border-radius:18%}
-    .titles{width:100%; order:2}
-    .header-actions{order:3; margin-left:0; width:100%; margin-top:10px; display:flex; justify-content:flex-start}
-    .loveBtn{width:100%; justify-content:center; padding:12px 16px; font-size:16px}
-    .controls{grid-template-columns:1fr; gap:12px; margin-top:16px}
-    .play{width:64px;height:64px transform:translateZ(0); transition:transform .12s ease, box-shadow .2s; }
-    .status{
-      font-size:26px;
-      font-weight:900;
-      color:var(--text);
-      background:none;
-      border:none;
-      padding:0;
-      display:inline-block;
-      min-width:260px;
-      text-align:left;
-      justify-self:start;
-      align-self:center;
+  <link rel="icon" type="image/png" href="33c5a23f-60c0-4265-a252-981bc7f54bbd.png">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rádio Habblive — Player</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg-dark:#051821;--bg-grad-a:#0aa9b8;--bg-grad-b:#083b4a;--card:#0b2230cc;--card-strong:#0b2230f2;--text:#e6f6ff;--muted:#9fd3df;--accent:#22d1e8;--purple:#7b2ff7;--magenta:#f107a3;--shadow:0 10px 30px rgba(0,0,0,.35);--radius:18px}
+    *{box-sizing:border-box} html,body{height:100%;margin:0}
+    body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:var(--text);
+      background:radial-gradient(1200px 600px at 20% -10%, var(--bg-grad-a), transparent),
+                 radial-gradient(900px 500px at 80% 10%, #12c2d3, transparent),
+                 linear-gradient(180deg, var(--bg-dark), #06121a 70%);
+      display:grid;place-items:center;padding:20px}
+    .wrap{width:min(980px,100%)} .player{position:relative;background:linear-gradient(180deg,var(--card),var(--card-strong));
+      backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.08);border-radius:var(--radius);
+      padding:clamp(16px,3vw,28px);box-shadow:var(--shadow);overflow:hidden}
+    #heartLayer{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+    .header{display:flex;gap:16px;align-items:center}
+    .header-actions{margin-left:auto;display:flex;align-items:center}
+    .cover{width:clamp(84px,20vw,140px);aspect-ratio:1/1;border-radius:20%;
+      background:radial-gradient(circle at 30% 30%,#ffffff22,#00000055),linear-gradient(135deg,var(--purple),var(--magenta));
+      box-shadow:var(--shadow);position:relative;overflow:hidden;flex:0 0 auto;background-size:cover;background-position:center}
+    .cover img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transition:opacity .25s ease}
+    .titles{flex:1 1 auto;min-width:0}
+    .brand{letter-spacing:.2px;font-weight:800;font-size:clamp(20px,4vw,28px);line-height:1.1}
+    .np{margin-top:6px;color:var(--muted);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .badges{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
+    .badge{padding:6px 10px;border-radius:999px;font-size:12px;background:#ffffff10;border:1px solid #ffffff1a}
+    .listenersRow{margin-top:8px;color:var(--muted);font-weight:700;display:block}
+    .controls{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:16px;margin-top:18px}
+    .play{width:74px;height:74px;border-radius:50%;border:none;display:grid;place-items:center;cursor:pointer;
+      background:conic-gradient(from 160deg,var(--magenta),var(--purple),var(--magenta));color:#fff;box-shadow:var(--shadow); transform:translateZ(0); transition:transform .12s ease, box-shadow .2s;}
+    .play svg{width:32px;height:32px}
+    .status{font-size:26px;font-weight:900;color:var(--text);background:none;border:none;padding:0;display:inline-block;min-width:260px;text-align:left;justify-self:start;align-self:center}
+    .volCol{display:flex;flex-direction:column;align-items:flex-end;gap:12px}
+    .vol{display:flex;align-items:center;gap:10px} .vol .ico{width:18px;height:18px;opacity:.8}
+    .slider{appearance:none;width:min(420px,60vw);height:10px;border-radius:999px;background:linear-gradient(90deg, var(--accent) 0%, #ffffff22 0%);outline:none;transition:background .12s linear;}
+    .slider::-webkit-slider-thumb{appearance:none;width:20px;height:20px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px #0003}
+    .slider::-moz-range-thumb{width:20px;height:20px;border:none;border-radius:50%;background:var(--accent)}
+    .loveBtn{border:1px solid #ffffff22;background:linear-gradient(180deg,#ff2c7d,#9922ff);color:#fff;border-radius:999px;
+      padding:14px 22px;font-weight:800;font-size:clamp(16px,2.8vw,18px);letter-spacing:.2px;cursor:pointer;
+      box-shadow:0 8px 18px #f107a355,inset 0 0 0 2px #ffffff22;display:inline-flex;align-items:center;gap:10px;transform:translateZ(0);transition:transform .15s ease, box-shadow .2s ease;}
+    .loveBtn .icon{font-size:20px}
+    .footer{display:flex;justify-content:space-between;align-items:center;margin-top:20px;gap:10px;flex-wrap:wrap}
+    .links{display:flex;gap:10px;flex-wrap:wrap}
+    .btn{display:inline-flex;align-items:center;gap:10px;padding:10px 14px;border-radius:12px;border:1px solid #ffffff14;cursor:pointer;text-decoration:none;color:var(--text);
+      background:linear-gradient(180deg,#ffffff14,#ffffff08)} .hint{color:var(--muted);font-size:12px}
+    .heart{position:absolute;will-change:transform,opacity;transition:transform 1.3s ease-out,opacity 1.3s ease-out;user-select:none}
+    @media (max-width:640px){.header{align-items:flex-start}.header-actions{margin-left:0;margin-top:10px}.controls{grid-template-columns:1fr}
+      .play{justify-self:center}.volCol{align-items:center}.footer{flex-direction:column;align-items:stretch}.links{justify-content:center}}
+    @media (max-width:720px){
+      .wrap{width:100%}
+      .player{padding:16px;border-radius:16px}
+      .header{flex-wrap:wrap; align-items:flex-start}
+      .cover{width:84px; border-radius:18%}
+      .titles{width:100%; order:2; text-align:center}
+      .header-actions{order:3; margin-left:0; width:100%; margin-top:10px; display:flex; justify-content:flex-start}
+      .loveBtn{width:100%; justify-content:center; padding:12px 16px; font-size:16px}
+      .controls{grid-template-columns:1fr; gap:12px; margin-top:16px; justify-items:center; text-align:center}
+      .status{min-width:unset;width:100%;text-align:center}
+      .volCol{align-items:stretch}
+      .vol{gap:10px}
+      .slider{width:100%; height:12px}
+      .footer{flex-direction:column; align-items:stretch; gap:12px}
+      .links{width:100%; gap:8px}
+      .btn{flex:1 1 auto; justify-content:center; padding:12px 14px; font-size:15px}
     }
-    .volCol{align-items:stretch}
-    .vol{gap:10px}
-    .slider{width:100%}
-    .footer{flex-direction:column; align-items:stretch; gap:12px}
-    .links{width:100%; gap:8px}
-    .btn{flex:1 1 auto; justify-content:center; padding:12px 14px; font-size:15px}
-  }
-  .btn, .play, .loveBtn{min-height:44px}
-  input[type="range"]{height:28px}
-
-  .player{margin:0 auto;}
-  @media (max-width: 720px){
-    .header{justify-content:center}
-    .titles{width:100%; order:2; text-align:center}
-    .listenersRow{justify-content:center; text-align:center}
-    .controls{grid-template-columns:1fr; gap:12px; margin-top:16px; justify-items:center; text-align:center}
-    .status{
-      font-size:26px;
-      font-weight:900;
-      color:var(--text);
-      background:none;
-      border:none;
-      padding:0;
-      display:inline-block;
-      min-width:260px;
-      text-align:left;
-      justify-self:start;
-      align-self:center;
-    }
-    .volCol{align-items:stretch; width:100%}
-    .vol{gap:10px; justify-content:center}
-    .slider{width:100%; height:12px}
-  }
-
-.play:hover{transform:scale(1.06); box-shadow:0 14px 30px rgba(0,0,0,.45)}
-.play:active{transform:scale(0.96)}
-
-@media (max-width:720px){
-  .status{
-      font-size:26px;
-      font-weight:900;
-      color:var(--text);
-      background:none;
-      border:none;
-      padding:0;
-      display:inline-block;
-      min-width:260px;
-      text-align:left;
-      justify-self:start;
-      align-self:center;
-    }
-}
-
-.loveBtn:hover{transform:scale(1.06);box-shadow:0 16px 34px #f107a366,inset 0 0 0 2px #ffffff22}
-.loveBtn:active{transform:scale(0.97)}
-@media (max-width:720px){ .status{min-width:unset;width:100%;text-align:center;justify-self:center} }
-</style>
+    .play:hover{transform:scale(1.06); box-shadow:0 14px 30px rgba(0,0,0,.45)}
+    .play:active{transform:scale(0.96)}
+    .loveBtn:hover{transform:scale(1.06);box-shadow:0 16px 34px #f107a366,inset 0 0 0 2px #ffffff22}
+    .loveBtn:active{transform:scale(0.97)}
+  </style>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 </head>
 <body>
@@ -157,10 +87,10 @@
           <div class="brand">Rádio Habblive</div>
           <div class="np" id="np"></div>
           <div class="badges">
-            <div class="badge" id="locutor">Locutor: <span id="locutorName">AutoDJ</span></div>
-            <div class="badge" id="programa">Programa: <span id="programaName">Tocando as melhores!</span></div>
+            <div class="badge">Locutor: <span id="locutorName">AutoDJ</span></div>
+            <div class="badge">Programa: <span id="programaName">Tocando as melhores!</span></div>
           </div>
-          <div class="listenersRow" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" id="listenersRow"><span id="ouvintesText">👥 ouvindo agora</span></div>
+          <div class="listenersRow" id="listenersRow"><span id="ouvintesText">👥 ouvindo agora</span></div>
         </div>
         <div class="header-actions">
           <button id="loveBtn" class="loveBtn" title="Amores pro locutor(a)"><span class="icon">❤</span> Amores pro locutor(a)</button>
@@ -184,7 +114,6 @@
         <div class="links">
           <a class="btn" href="https://discord.gg/aCeNspzQzn" target="_blank" rel="noreferrer"><i class="fab fa-discord"></i> Discord</a>
           <a class="btn" href="https://habblive.in" target="_blank" rel="noreferrer"><i class="fas fa-home"></i> Entrar no Habblive</a>
-          
         </div>
         <div class="hint">Rádio Habblive - Estamos a 10 anos com você! Fique Sintonizado =)</div>
       </div>
@@ -196,7 +125,6 @@
   <div class="credit" style="position:fixed;bottom:8px;left:0;width:100%;text-align:center;opacity:.35;color:var(--muted);font-size:12px;pointer-events:none;">desenvolvido por michael, discord: explodido</div>
 
 <script>
-  // STREAMS
   const STREAMS = [
     "https://sonicpanel.oficialserver.com/8342/;",
     "https://sonicpanel.oficialserver.com/8342/stream",
@@ -211,8 +139,14 @@
   const vol = el('vol');
   const loveBtn = el('loveBtn');
   const heartLayer = el('heartLayer');
+  const locutorNameEl = el('locutorName');
+  const programaNameEl = el('programaName');
+  const ouvintesTextEl = el('ouvintesText');
+  const npEl = el('np');
+  const avatarCover = el('avatarCover');
+  const logoImg = el('logo');
+  const card = el('card');
 
-  // Volume + fill
   const savedVol = localStorage.getItem('rh_vol'); if (savedVol) vol.value = savedVol;
   audio.volume = +vol.value;
   function updateVolFill(){
@@ -225,87 +159,115 @@
   updateVolFill();
 
   let playing = false;
+
   async function tryPlayList(){
     for (const url of STREAMS){
       try{
         statusEl.textContent = 'conectando…';
         audio.pause();
         audio.removeAttribute('src');
-        audio.src = url;
+        audio.src = url + (url.includes('?') ? '&' : '?') + 't=' + Date.now();
         audio.load();
         await audio.play();
         playing = true; updatePlayIcon();
         return true;
-      }catch(e){ /* tenta próximo */ }
+      }catch(e){}
     }
     statusEl.textContent = 'erro ao tocar';
     return false;
   }
+
   playBtn.addEventListener('click', async ()=>{
     if (!playing){ await tryPlayList(); }
     else { audio.pause(); playing=false; updatePlayIcon(); statusEl.textContent='pausado'; }
   });
+
   function updatePlayIcon(){
     playIcon.innerHTML = playing ? '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
   }
+
   audio.addEventListener('playing', ()=> statusEl.textContent = 'Tocando...');
   audio.addEventListener('waiting',  ()=> statusEl.textContent = 'reconectando…');
   audio.addEventListener('stalled',  ()=> statusEl.textContent = 'buffering…');
   audio.addEventListener('error',    ()=> { statusEl.textContent = 'erro de stream'; playing=false; updatePlayIcon(); });
 
-  // Corações
-  loveBtn.addEventListener('click', (e)=>{ playSfx(); const r=e.currentTarget.getBoundingClientRect(), b=document.getElementById('card').getBoundingClientRect(); spawnHearts(r.left+r.width/2-b.left, r.top+r.height/2-b.top); });
-  function spawnHearts(x,y){const colors=['#ff4d6d','#7b2ff7','#22d1e8','#ffd166','#3be8b0','#ff81a6'],glyphs=['❤','🩷','💜','💙','💚','💛'];const n=12+Math.floor(Math.random()*6);
-    for(let i=0;i<n;i++){const h=document.createElement('div');h.className='heart';h.textContent=glyphs[Math.floor(Math.random()*glyphs.length)];
-      h.style.left=(x+(Math.random()*40-20))+'px';h.style.top=(y+(Math.random()*14-7))+'px';h.style.fontSize=(18+Math.random()*18)+'px';h.style.color=colors[Math.floor(Math.random()*colors.length)];
-      heartLayer.appendChild(h);const dx=(Math.random()*160-80),dy=(-140-Math.random()*120);requestAnimationFrame(()=>{h.style.transform=`translate(${dx}px, ${dy}px) scale(1.6)`;h.style.opacity='0';});setTimeout(()=>h.remove(),1500);}}
-  let audioCtx; function playSfx(){try{audioCtx=audioCtx||new(window.AudioContext||window.webkitAudioContext)();const d=.25,n=audioCtx.currentTime,o=audioCtx.createOscillator(),g=audioCtx.createGain(),f=audioCtx.createBiquadFilter();f.type='highpass';f.frequency.setValueAtTime(200,n);f.frequency.exponentialRampToValueAtTime(2200,n+d);o.type='triangle';o.frequency.setValueAtTime(220,n);o.frequency.exponentialRampToValueAtTime(660,n+d);g.gain.setValueAtTime(.0001,n);g.gain.exponentialRampToValueAtTime(.6,n+.03);g.gain.exponentialRampToValueAtTime(.0001,n+d);o.connect(f);f.connect(g);g.connect(audioCtx.destination);o.start(n);o.stop(n+d);}catch(e){}}
-
-  // === METADADOS em tempo real via /api/now (na Vercel) ===
-  async function pollMeta() {
-    try {
-      const r = await fetch('/api/now', { cache: 'no-store' });
+  async function fetchMeta(){
+    try{
+      const r = await fetch('/api/meta', { cache: 'no-store' });
       const data = await r.json();
-      if (data && !data.error) {
-        const rawLocutor = (data.locutor || '').trim();
-        const prog = (data.programa || '').trim();
-        const isAuto = !rawLocutor || /autodj/i.test(rawLocutor);
 
-        // Atualiza badges
-        document.getElementById('locutorName').textContent = isAuto ? 'AutoDJ' : rawLocutor;
-        document.getElementById('programaName').textContent = prog || (isAuto ? 'Tocando as melhores!' : 'Ao vivo');
+      const locutor = (data.locutor || '').trim();
+      const programa = (data.programa || '').trim();
+      const ouvintes = Number(data.ouvintes || 0);
+      const isAutoDJ = !locutor || /autodj/i.test(locutor);
 
-        // Linha "np"
-        const npEl = document.getElementById('np');
-        if (npEl) {
-          npEl.textContent = isAuto ? 'Tocando as melhores!' : (prog ? `${prog} — ${rawLocutor}` : rawLocutor);
-        }
+      locutorNameEl.textContent = isAutoDJ ? 'AutoDJ' : locutor;
+      programaNameEl.textContent = programa || 'Tocando as melhores!';
+      ouvintesTextEl.textContent = `👥 ${ouvintes} ${ouvintes === 1 ? 'ouvinte' : 'ouvintes'}`;
 
-        // Ouvintes
-        const ouvintesTextEl = document.getElementById('ouvintesText');
-        if (ouvintesTextEl && typeof data.ouvintes === 'number') {
-          const n = data.ouvintes;
-          ouvintesTextEl.textContent = `👥 ${n} ` + (n === 1 ? 'ouvinte' : 'ouvintes');
-        }
+      npEl.textContent = (programa && locutor && !isAutoDJ)
+        ? `${programa} — ${locutor}`
+        : (programa || 'Tocando as melhores!');
 
-        // Avatar (quando não for AutoDJ)
-        const avatarCover = document.getElementById('avatarCover');
-        const logoImg = document.getElementById('logo');
-        if (!isAuto && rawLocutor) {
-          const url = `https://habblive.in/imager_radio.php?user=${encodeURIComponent(rawLocutor)}&size=m&head_direction=2&gesture=sml`;
-          avatarCover.style.backgroundImage = `url(${url})`;
-          if (logoImg) logoImg.style.opacity = 0;
-        } else {
-          avatarCover.style.backgroundImage = 'none';
-          if (logoImg) logoImg.style.opacity = 1;
-        }
+      if (!isAutoDJ && locutor){
+        const url = `https://habblive.in/imager_radio.php?user=${encodeURIComponent(locutor)}&size=m&head_direction=2&gesture=sml`;
+        avatarCover.style.backgroundImage = `url(${url})`;
+        logoImg.style.opacity = 0;
+      } else {
+        avatarCover.style.backgroundImage = 'none';
+        logoImg.style.opacity = 1;
       }
-    } catch (e) {
-      // mantém o último estado silenciosamente
+    } catch {}
+  }
+  setInterval(fetchMeta, 10000);
+  fetchMeta();
+
+  loveBtn.addEventListener('click', (e)=>{
+    playSwoosh();
+    const rect = e.currentTarget.getBoundingClientRect();
+    const base = card.getBoundingClientRect();
+    const x0 = rect.left + rect.width/2 - base.left;
+    const y0 = rect.top + rect.height/2 - base.top;
+    spawnHearts(x0, y0);
+  });
+  function spawnHearts(x,y){
+    const colors = ['#ff4d6d','#7b2ff7','#22d1e8','#ffd166','#3be8b0','#ff81a6'];
+    const glyphs = ['❤','🩷','💜','💙','💚','💛'];
+    const n = 12 + Math.floor(Math.random()*6);
+    for(let i=0;i<n;i++){
+      const h = document.createElement('div');
+      h.className = 'heart';
+      h.textContent = glyphs[Math.floor(Math.random()*glyphs.length)];
+      h.style.left = (x + (Math.random()*40 - 20)) + 'px';
+      h.style.top  = (y + (Math.random()*14 - 7)) + 'px';
+      h.style.fontSize = (18 + Math.random()*18) + 'px';
+      h.style.color = colors[Math.floor(Math.random()*colors.length)];
+      heartLayer.appendChild(h);
+      const dx = (Math.random()*160 - 80);
+      const dy = (-140 - Math.random()*120);
+      requestAnimationFrame(()=>{
+        h.style.transform = `translate(${dx}px, ${dy}px) scale(1.6)`;
+        h.style.opacity = '0';
+      });
+      setTimeout(()=> h.remove(), 1500);
     }
   }
-  setInterval(pollMeta, 10000);
-  pollMeta();
+  let audioCtx;
+  function playSwoosh(){
+    try{
+      audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)();
+      const dur = 0.25;
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      const filter = audioCtx.createBiquadFilter();
+      filter.type='highpass'; filter.frequency.setValueAtTime(200, now); filter.frequency.exponentialRampToValueAtTime(2200, now+dur);
+      osc.type='triangle'; osc.frequency.setValueAtTime(220, now); osc.frequency.exponentialRampToValueAtTime(660, now+dur);
+      gain.gain.setValueAtTime(0.0001, now); gain.gain.exponentialRampToValueAtTime(0.6, now+0.03); gain.gain.exponentialRampToValueAtTime(0.0001, now+dur);
+      osc.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination);
+      osc.start(now); osc.stop(now+dur);
+    }catch(e){}
+  }
 </script>
 </body>
 </html>
